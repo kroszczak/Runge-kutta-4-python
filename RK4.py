@@ -3,7 +3,7 @@ import numpy as np
 import copy
 
 # tablica zmiennych - dane początkowe
-s = [ 250000,250000,250000,250000 ]
+s = [ 0,0,0,0 ]
 labels = ['p53', 'MDMcyt', 'MDMn', 'PTEN']
 
 def pochodne(s,k):
@@ -12,10 +12,10 @@ def pochodne(s,k):
     p2 = 440
     # p2 = 440 * 0.02 # włączone siRNA
     p3 = 100
-    # p3 = 0 # bez PTEN
+    p3 = 0 # bez PTEN
     d1 = 1.375 * 10**-14
     d2 = 1.375 * pow(10,-4) * 0.1
-    # d2 = 1.375 * pow(10,-4) # uszkodzenie DNA
+    d2 = 1.375 * pow(10,-4) # uszkodzenie DNA
     d3 = 3 * pow(10,-5)
     k1 = 1.925 * pow(10,-4)
     k2 = pow(10,5)
@@ -30,20 +30,16 @@ def pochodne(s,k):
 
 def rk4_vec(t, dt, n, s, f):
     rk_step_matrix = [np.zeros(len(s)) for i in range(5)]
-    for i in range(n): rk_step_matrix[4][i]=s[i] # do W zapisz aktualny stan danej zmiennej z tablicy S
-    pochodne(rk_step_matrix[4], rk_step_matrix[0]) # podajemy tablibce W ORAZ k1 - k1 to jest tablica stanów k1 dla wszytskich elementów, i odpowiednio kolejne tez; 
-    for i in range(n): rk_step_matrix[4][i]=s[i]+dt/2*rk_step_matrix[0][i]
-    pochodne(rk_step_matrix[4],rk_step_matrix[1])
-    for i in range(n): rk_step_matrix[4][i]=s[i]+dt/2*rk_step_matrix[1][i]
-    pochodne(rk_step_matrix[4],rk_step_matrix[2])
-    for i in range(n): rk_step_matrix[4][i]=s[i]+dt*rk_step_matrix[2][i]
-    pochodne(rk_step_matrix[4],rk_step_matrix[3])
+    for j in range(4):
+        for i, factor in zip(range(n), [0,dt/2*rk_step_matrix[0][j-1],dt/2*rk_step_matrix[1][j-1],dt*rk_step_matrix[2][j-1]]):
+            rk_step_matrix[4][i]=s[i]+factor
+        pochodne(rk_step_matrix[4], rk_step_matrix[j])
     for i in range(n): s[i]=s[i]+dt/6*(rk_step_matrix[0][i]+2*rk_step_matrix[1][i]+2*rk_step_matrix[2][i]+rk_step_matrix[3][i])
     return 0
 
 # ustawienia
 n = 4 # ilość zmiennych
-hours = 12
+hours = 64
 tmax = 3600*hours# czas symulacji
 dt = 1
 N = tmax/dt; # ilość kroktów czasowych
