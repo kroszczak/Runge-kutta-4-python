@@ -29,27 +29,21 @@ def pochodne(s,k):
 
 
 def rk4_vec(t, dt, n, s, f):
-    M = len(s)
-    k1 = np.zeros(M)
-    k2 = np.zeros(M)
-    k3 = np.zeros(M)
-    k4 = np.zeros(M)
-    w = np.zeros(M)
-
-    for i in range(n): w[i]=s[i] # do W zapisz aktualny stan danej zmiennej z tablicy S
-    pochodne(w, k1) # podajemy tablibce W ORAZ k1 - k1 to jest tablica stanów k1 dla wszytskich elementów, i odpowiednio kolejne tez; 
-    for i in range(n): w[i]=s[i]+dt/2*k1[i]
-    pochodne(w,k2)
-    for i in range(n): w[i]=s[i]+dt/2*k2[i]
-    pochodne(w,k3)
-    for i in range(n): w[i]=s[i]+dt*k3[i]
-    pochodne(w,k4)
-    for i in range(n): s[i]=s[i]+dt/6*(k1[i]+2*k2[i]+2*k3[i]+k4[i])
+    rk_step_matrix = [np.zeros(len(s)) for i in range(5)]
+    for i in range(n): rk_step_matrix[4][i]=s[i] # do W zapisz aktualny stan danej zmiennej z tablicy S
+    pochodne(rk_step_matrix[4], rk_step_matrix[0]) # podajemy tablibce W ORAZ k1 - k1 to jest tablica stanów k1 dla wszytskich elementów, i odpowiednio kolejne tez; 
+    for i in range(n): rk_step_matrix[4][i]=s[i]+dt/2*rk_step_matrix[0][i]
+    pochodne(rk_step_matrix[4],rk_step_matrix[1])
+    for i in range(n): rk_step_matrix[4][i]=s[i]+dt/2*rk_step_matrix[1][i]
+    pochodne(rk_step_matrix[4],rk_step_matrix[2])
+    for i in range(n): rk_step_matrix[4][i]=s[i]+dt*rk_step_matrix[2][i]
+    pochodne(rk_step_matrix[4],rk_step_matrix[3])
+    for i in range(n): s[i]=s[i]+dt/6*(rk_step_matrix[0][i]+2*rk_step_matrix[1][i]+2*rk_step_matrix[2][i]+rk_step_matrix[3][i])
     return 0
 
 # ustawienia
 n = 4 # ilość zmiennych
-hours = 64
+hours = 12
 tmax = 3600*hours# czas symulacji
 dt = 1
 N = tmax/dt; # ilość kroktów czasowych
