@@ -1,0 +1,28 @@
+options:
+  hours: 10
+  dt: 0.1
+parameters:
+  k1: 1.925e-4
+  k2: 100000
+  k3: 150000
+  p1: 8.8
+  p2: 440
+  # p3: 100
+  p3: 0
+  d1: 1.3753e-14
+  d2: 1.375e-4
+  d3: 3.0e-5
+
+factors:
+  'p53':
+    starting_value: 0
+    function: "p1 - (d1 * p53 * MDMn**2)"
+  'MDMcyt':
+    starting_value: 0
+    function: "p2 * (p53**4 / (p53**4 + k2**4) ) - ( k1 * ( k3**2 / (k3**2 + PTEN**2) ) * MDMcyt ) - (d2 * MDMcyt)"
+  'MDMn':
+    starting_value: 0
+    function: "(k1 * k3**2 * MDMcyt) / (k3**2 + PTEN**2) - (d2 * MDMn)"
+  'PTEN':
+    starting_value: 0
+    function: p3 * (p53**4 / (p53**4 + k2**4)) - (d3 * PTEN)
