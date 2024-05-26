@@ -1,65 +1,47 @@
 import matplotlib.pyplot as plt
-from RPNparser import infix_to_rpn
 import numpy as np
-import copy
 from sympy import sympify, symbols
-import yaml
-from datetime import datetime, date
+from yaml import safe_load
+import os 
+from alive_progress import alive_bar
 import math
-
-# Wczytaj plik YAML
-sub_dict = dict()
+import copy
 fin_dict = dict()
 funtions = dict()
-data = None
-with open("model.yaml", 'r') as file:
-    data = yaml.safe_load(file)
-for key, value in data['parameters'].items():
-    sub_dict[symbols(key)] = value
+print("reading config file...")
+data = safe_load(open("model.yaml", 'r'))
+
+print("preparing function definitions...")
 for key, value in data['factors'].items():
     fin_dict[key] = value['starting_value']
-for key, value in data['factors'].items():
-    args = ",".join([i for i in list(sorted(data['factors'].keys()))])
-    funtions[key] = eval(f"lambda {args}: {sympify(value['function']).subs(sub_dict)}")
-# RK SIMULATION
-def pochodne(s,k):
-    for key, val in funtions.items(): k[key] = val(**fin_dict)
-
-def rk4_vec(hd):
-    for j, factor in loop:
-        prev = rk_step_matrix[j-1]
-        for i in funtions.keys():
-            ifactor = factor*prev.get(i,0)
-            rk_step_matrix[4][i]=fin_dict[i]+ifactor
-        pochodne(rk_step_matrix[4], rk_step_matrix[j])
-    for i in funtions.keys(): fin_dict[i]=fin_dict[i]+hd*(rk_step_matrix[0][i]+2*rk_step_matrix[1][i]+2*rk_step_matrix[2][i]+rk_step_matrix[3][i])
-    return 0
-
-# MAIN LOOP
-t = 0;
-dt = data['options']['dt']
-time = []
-wynik = []
-dt = dt/6
-tmax = 3600*data['options']['hours']
-N = (3600*data['options']['hours'])/dt
-rk_step_matrix = [dict() for i in range(5)]
-loop = list(zip(list(range(4)), [0, dt/2, dt/2, dt]))
-pct = 0
-for i in range(int(N)):
-    if  (pct := math.floor(100*i/N)) > pct: print(pct)
-    rk4_vec(dt) # to moj step
-    wynik.append(copy.deepcopy(fin_dict))
-    time.append(t:=t+dt)
+    funtions[key] = eval(f"lambda {','.join([i for i in list(sorted(data['factors'].keys()))])}: {sympify(value['function']).subs({symbols(key): value for key, value in data['parameters'].items()})}")
     
+def rk4_vec(dt, fin_dict):
+    for j, factor in enumerate([0, dt/2, dt/2, dt]):
+        for i in funtions.keys():rk_step_matrix[4][i]=fin_dict[i]+factor*rk_step_matrix[j-1].get(i,0)
+        for key, val in funtions.items(): rk_step_matrix[j][key] = val(**rk_step_matrix[4])
+    for i in funtions.keys(): fin_dict[i]=fin_dict[i]+dt/6*(rk_step_matrix[0][i]+2*rk_step_matrix[1][i]+2*rk_step_matrix[2][i]+rk_step_matrix[3][i])
+    return {key:fin_dict[key] for key in fin_dict}
 
+print("setting simulation variables...")
+rk_step_matrix = [dict() for i in range(5)]
+h =  data['options']['dt']
+tmax = 3600*data['options']['hours']
+N = int((3600*data['options']['hours'])/h)
+
+# wynik = [rk4_vec(h) for i in range(N)]
+wynik = []
+with alive_bar(N) as bar:
+    for i in range(N):
+        wynik.append(rk4_vec(h, fin_dict))
+        bar()
 # PLOT
-input(wynik[-1])
-[plt.plot(time, [column[key] for column in wynik], label=key) for i, key in enumerate(funtions.keys())]
+print("exporting.jpg file...")
+[plt.plot(range(N), [column[key] for column in wynik], label=key) for key in funtions.keys()]
 plt.xlabel('Czas (s)')
 plt.ylabel('Liczba cząsteczek')
 plt.title(f"Symulacja {data['options']['hours']}h")
-plt.xticks(np.arange(0, tmax, step=(lbs := int(tmax/10))), labels=[str(int(data['options']['hours']*i/10)) for i in range(10)])
+plt.xticks(np.arange(0, N, step=int(math.ceil(N/10))), labels=[str(int(data['options']['hours']*i/10)) for i in range(10)])
 plt.legend()
 plt.grid(True)
 plt.savefig('wykres.jpg')
