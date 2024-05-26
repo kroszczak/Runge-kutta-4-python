@@ -29,7 +29,7 @@ h =  data['options']['dt']
 tmax = 3600*data['options']['hours']
 N = int((3600*data['options']['hours'])/h)
 
-wynik = [rk4_vec(h) for i in range(N)]
+wynik = [rk4_vec(h, fin_dict) for i in range(N)]
 # wynik = []
 # with alive_bar(N) as bar:
 #     for i in range(N):
