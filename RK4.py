@@ -3,7 +3,7 @@ import numpy as np
 from sympy import sympify, symbols
 from yaml import safe_load
 import os 
-from alive_progress import alive_bar
+# from alive_progress import alive_bar
 import math
 import copy
 fin_dict = dict()
@@ -29,12 +29,12 @@ h =  data['options']['dt']
 tmax = 3600*data['options']['hours']
 N = int((3600*data['options']['hours'])/h)
 
-# wynik = [rk4_vec(h) for i in range(N)]
-wynik = []
-with alive_bar(N) as bar:
-    for i in range(N):
-        wynik.append(rk4_vec(h, fin_dict))
-        bar()
+wynik = [rk4_vec(h) for i in range(N)]
+# wynik = []
+# with alive_bar(N) as bar:
+#     for i in range(N):
+#         wynik.append(rk4_vec(h, fin_dict))
+#         bar()
 # PLOT
 print("exporting.jpg file...")
 [plt.plot(range(N), [column[key] for column in wynik], label=key) for key in funtions.keys()]
